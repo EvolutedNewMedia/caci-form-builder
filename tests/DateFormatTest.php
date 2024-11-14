@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 use Nomensa\FormBuilder\Helpers\DateStringHelper;
 
-class DateStringHelperTest extends TestCase
+class DateFormatTest extends TestCase
 {
 
 
