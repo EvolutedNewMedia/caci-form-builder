@@ -250,10 +250,12 @@ class FormSubmission extends Model
 
         if(is_array($value)) {
             foreach ($value as $key => $val) {
-                $value[$key] = strip_tags($val);
+                // Remove any angle brackets
+                $value[$key] = str_replace(['<', '>'], '', $val);
             }
         } elseif (is_string($value)) {
-            $value = strip_tags($value);
+             // Remove any angle brackets
+            $value = str_replace(['<', '>'], '', $value);
         }
 
         if ($group_index !== null) {
