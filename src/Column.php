@@ -5,6 +5,7 @@ namespace Nomensa\FormBuilder;
 use Auth;
 use Carbon\Carbon;
 use CSSClassFactory;
+use Exception;
 use Field;
 use Form;
 use Html;
@@ -376,10 +377,40 @@ class Column
 
                 if (!empty($this->value)) {
 
+                    // Catch format() exception if $this->value is passed in as a string
+                    // to determine cause of recurring issue
+                    try {
+                        MarkerUpper::wrapInTag($this->value->format('j F Y'), 'p');
+                    } catch (Exception $exception) {
+                        $valueData = [
+                            '$this->stateSpecificType' => $this->stateSpecificType,
+                            '$this->classBundle' => $this->classBundle,
+                            '$this->label' => $this->label,
+                            '$this->value' => $this->value,
+                        ];
+
+                        logger('date-readonly exception', [
+                            'EXCEPTION' => [
+                                'exception type' => get_class($exception),
+                                'message' => $exception->getMessage(),
+                                'file' => $exception->getFile(),
+                                'line' => $exception->getLine(),
+                                'trace' => $exception->getTraceAsString(),
+                            ],
+                            'VALUE DATA' => json_encode($valueData, JSON_PRETTY_PRINT),
+                        ]);
+                                    
+                    }
+                    
+                    // DEFENSIVE FIX
+                    $date = $this->value instanceof Carbon
+                        ? $this->value
+                        : Carbon::parse($this->value);
+
                     $output .= '<div class="' . $this->classBundle . '">';
                     $output .= '<div class="section-readonly">';
                     $output .= MarkerUpper::wrapInTag($this->label, "h4");
-                    $output .= MarkerUpper::wrapInTag($this->value->format('j F Y'), 'p');
+                    $output .= MarkerUpper::wrapInTag($date->format('j F Y'), 'p');
                     $output .= '</div>' . PHP_EOL . '<!-- /.section-readonly -->' . PHP_EOL;
                     $output .= '</div>' . PHP_EOL;
                     $output .= Field::hidden($this->fieldNameWithBrackets,
