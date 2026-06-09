@@ -376,11 +376,14 @@ class Column
             case "date-readonly":  /* Render text into the form and add a hidden field */
 
                 if (!empty($this->value)) {
-
                     // Catch format() exception if $this->value is passed in as a string
                     // to determine cause of recurring issue
                     try {
-                        MarkerUpper::wrapInTag($this->value->format('j F Y'), 'p');
+                        // Ensure the date is a Carbon date 
+                        $date = $this->value instanceof Carbon
+                            ? $this->value
+                            : Carbon::parse($this->value);
+
                     } catch (Exception $exception) {
                         $valueData = [
                             '$this->stateSpecificType' => $this->stateSpecificType,
@@ -401,11 +404,6 @@ class Column
                         ]);
                                     
                     }
-                    
-                    // DEFENSIVE FIX
-                    $date = $this->value instanceof Carbon
-                        ? $this->value
-                        : Carbon::parse($this->value);
 
                     $output .= '<div class="' . $this->classBundle . '">';
                     $output .= '<div class="section-readonly">';
@@ -414,7 +412,7 @@ class Column
                     $output .= '</div>' . PHP_EOL . '<!-- /.section-readonly -->' . PHP_EOL;
                     $output .= '</div>' . PHP_EOL;
                     $output .= Field::hidden($this->fieldNameWithBrackets,
-                        $this->value->format('Y-m-d'), $this->asFormArray());
+                        $date->format('Y-m-d'), $this->asFormArray());
                 }
 
                 break;
