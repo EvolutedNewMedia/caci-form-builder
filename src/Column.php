@@ -5,6 +5,7 @@ namespace Nomensa\FormBuilder;
 use Auth;
 use Carbon\Carbon;
 use CSSClassFactory;
+use Exception;
 use Field;
 use Form;
 use Html;
@@ -375,15 +376,48 @@ class Column
             case "date-readonly":  /* Render text into the form and add a hidden field */
 
                 if (!empty($this->value)) {
+                    $date = null;
+
+                    try {
+                        // Ensure the date is a Carbon date 
+                        $date = $this->value instanceof Carbon
+                            ? $this->value
+                            : Carbon::parse($this->value);
+
+                    } catch (Exception $exception) {
+                        $valueData = [
+                            '$this->stateSpecificType' => $this->stateSpecificType,
+                            '$this->classBundle' => $this->classBundle,
+                            '$this->label' => $this->label,
+                            '$this->value' => $this->value,
+                        ];
+
+                        logger('date-readonly exception', [
+                            'EXCEPTION' => [
+                                'exception type' => get_class($exception),
+                                'message' => $exception->getMessage(),
+                                'file' => $exception->getFile(),
+                                'line' => $exception->getLine(),
+                                'trace' => $exception->getTraceAsString(),
+                            ],
+                            'VALUE DATA' => json_encode($valueData, JSON_PRETTY_PRINT),
+                        ]);
+                                    
+                    }
 
                     $output .= '<div class="' . $this->classBundle . '">';
                     $output .= '<div class="section-readonly">';
                     $output .= MarkerUpper::wrapInTag($this->label, "h4");
-                    $output .= MarkerUpper::wrapInTag($this->value->format('j F Y'), 'p');
+                    // Only format date if $date exists, otherwise just $this->value - 
+                    // this is to prevent errors if the date not formatted correctly
+                    $output .= $date
+                        ? MarkerUpper::wrapInTag($date->format('j F Y'), 'p')
+                        : MarkerUpper::wrapInTag($this->value, 'p');
+
                     $output .= '</div>' . PHP_EOL . '<!-- /.section-readonly -->' . PHP_EOL;
                     $output .= '</div>' . PHP_EOL;
                     $output .= Field::hidden($this->fieldNameWithBrackets,
-                        $this->value->format('Y-m-d'), $this->asFormArray());
+                        $date->format('Y-m-d'), $this->asFormArray());
                 }
 
                 break;
